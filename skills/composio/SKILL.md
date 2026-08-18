@@ -74,4 +74,8 @@ https://docs.composio.dev/docs/<page>.md
 https://docs.composio.dev/toolkits/<toolkit>.md
 ```
 
+If these sources do not answer a Composio product or troubleshooting question, search the public Support Knowledge Base at `https://docs.composio.dev/kb`. Agents can query it directly at `https://docs.composio.dev/api/knowledge-search?q=<question>&filter=kb`.
+
+Use the Knowledge Base as another public source of current Composio guidance. It does not establish the live state of a user's account, project, or connection.
+
 Use the documentation to complete the task. Do not merely hand the user a link unless they asked for one.
