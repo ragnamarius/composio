@@ -1,4 +1,12 @@
-import { docs, reference, examples, toolkits, changelog } from 'fumadocs-mdx:collections/server';
+import {
+  docs,
+  reference,
+  examples,
+  toolkits,
+  knowledgeBase,
+  changelog,
+} from 'fumadocs-mdx:collections/server';
+import type { DocCollectionEntry } from 'fumadocs-mdx/runtime/server';
 import { type InferPageType, loader, multiple } from 'fumadocs-core/source';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { openapi, openapiV3 } from './openapi';
@@ -141,7 +149,26 @@ export const toolkitsSource = loader({
   plugins: [lucideIconsPlugin()],
 });
 
-export const changelogEntries = changelog;
+export const knowledgeBaseSource = loader({
+  baseUrl: '/kb',
+  source: knowledgeBase.toFumadocsSource(),
+  plugins: [lucideIconsPlugin()],
+});
+
+export type ChangelogEntry = DocCollectionEntry<
+  'changelog',
+  {
+    date: string;
+    title: string;
+    description?: string;
+    icon?: string;
+    full?: boolean;
+  }
+>;
+
+// The generated Fumadocs virtual module is untyped in Next's production
+// checker. Preserve the collection's public shape for all route consumers.
+export const changelogEntries = changelog as ChangelogEntry[];
 
 export function getOgImageUrl(
   _section: string,
@@ -388,8 +415,8 @@ export function mdxToCleanMarkdown(content: string, url?: string): string {
     /<AIToolsBanner\s*\/>/g,
     '### For AI tools\n\n' +
       '**Skills:**\n' +
-      '```bash\nnpx skills add composiohq/skills\n```\n' +
-      '[Skills.sh](https://skills.sh/composiohq/skills/composio) · [GitHub](https://github.com/composiohq/skills)\n\n' +
+      '```bash\nnpx skills add ComposioHQ/composio --skill composio -y\n```\n' +
+      '[GitHub](https://github.com/ComposioHQ/composio/tree/next/skills/composio)\n\n' +
       '**CLI:**\n' +
       '```bash\ncurl -fsSL https://composio.dev/install | sh\n```\n' +
       '[CLI Reference](/docs/cli)\n\n' +
