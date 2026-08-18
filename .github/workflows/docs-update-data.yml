@@ -44,11 +44,27 @@ jobs:
         with:
           client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_BOT_APP_PRIVATE_KEY }}
+          owner: ComposioHQ
+          repositories: composio
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
+      - name: Generate read-only KB source token
+        id: source-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_APP_PRIVATE_KEY }}
+          owner: ComposioHQ
+          repositories: support-knowledge
+          permission-contents: read
 
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Log trigger source
         env:
@@ -106,7 +122,7 @@ jobs:
           # Resolves manifest.source.commit on the upstream KB repository. Without
           # read access there the check reports "unverifiable" and stays silent,
           # so an unset or narrow token degrades quietly rather than crying wolf.
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.source-token.outputs.token }}
         run: |
           set +e
           bun scripts/verify-kb.ts --check-links --check-source-pin \

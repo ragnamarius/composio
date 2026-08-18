@@ -1043,17 +1043,17 @@ async function knowledgeBrowseToMarkdown(rest: string[]): Promise<string | null>
     const areas = PRODUCT_AREAS.filter((area) => area.defaultBrowse)
       .map((area) => `- [${area.title}](https://docs.composio.dev/kb/topic/${area.slug}) — ${area.description}`)
       .join('\n');
-    return `# Composio Knowledge Base\n\nSearch and browse public Composio knowledge across docs, verified support answers, OAuth guides, toolkits, examples, reference, and changelog.\n\n- [Search all knowledge](https://docs.composio.dev/kb/search)\n- [Browse all toolkits](https://docs.composio.dev/kb/toolkits)\n\n## Support topics\n\n${areas}${LLM_FOOTER}`;
+    return `# Composio Knowledge Base\n\nSearch and browse public Composio knowledge across docs, verified support answers, OAuth guides, toolkits, examples, reference, and changelog.\n\n- [Search support knowledge](https://docs.composio.dev/kb/search)\n- [Browse all toolkits](https://docs.composio.dev/kb/toolkits)\n\n## Support topics\n\n${areas}${LLM_FOOTER}`;
   }
 
   if (rest.length === 1 && rest[0] === 'search') {
-    return `# Search Composio knowledge\n\nUse the [Knowledge Base search](https://docs.composio.dev/kb/search) to find canonical public answers across every indexed Composio source.${LLM_FOOTER}`;
+    return `# Search Composio support knowledge\n\nUse the [Knowledge Base search](https://docs.composio.dev/kb/search) to find canonical public support answers and toolkit-specific fixes.${LLM_FOOTER}`;
   }
 
   if (rest.length === 1 && rest[0] === 'toolkits') {
     const toolkits = await getKnowledgeToolkitSummaries();
     const rows = toolkits
-      .map((toolkit) => `- [${toolkit.name}](https://docs.composio.dev/kb/toolkit/${toolkit.slug}) — ${toolkit.knowledgeCount} public page${toolkit.knowledgeCount === 1 ? '' : 's'}`)
+      .map((toolkit) => `- [${toolkit.name}](https://docs.composio.dev/kb/toolkit/${toolkit.slug}) — ${toolkit.knowledgeCount} resource${toolkit.knowledgeCount === 1 ? '' : 's'}`)
       .join('\n');
     return `# Toolkit knowledge\n\nBrowse canonical public knowledge by provider.\n\n${rows}${LLM_FOOTER}`;
   }

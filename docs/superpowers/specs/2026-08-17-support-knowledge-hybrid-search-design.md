@@ -358,9 +358,12 @@ events for the KB surface:
 - result clicked, stable object ID, and displayed position; and
 - dependency degradation category.
 
-Raw search text is not sent to analytics by default. Algolia query IDs may continue
-to measure the keyword candidate request, but hybrid display positions must not be
-misreported as Algolia's original keyword positions.
+The server sends the first 200 characters of each query to PostHog after redacting
+common credential patterns. This is intentional for MVP relevance review; the
+public disclosure for query logging is handled separately. Client click/search
+events remain provider-neutral and must not attach the query through URL metadata.
+Algolia query IDs may continue to measure the keyword candidate request, but hybrid
+display positions must not be misreported as Algolia's original keyword positions.
 
 ## Rollout
 

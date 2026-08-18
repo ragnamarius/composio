@@ -319,6 +319,16 @@ describe('knowledge browse pages', () => {
     expect(html).not.toContain('public page');
   });
 
+  test('keeps agent-readable KB browse copy aligned with the public UI', () => {
+    const route = source('app/llms.mdx/[[...slug]]/route.ts');
+
+    expect(route).toContain('Search support knowledge');
+    expect(route).toContain('canonical public support answers and toolkit-specific fixes');
+    expect(route).toContain('knowledgeCount} resource');
+    expect(route).not.toContain('knowledgeCount} public page');
+    expect(route).not.toContain('across every indexed Composio source');
+  });
+
   test('renders the toolkit directory without a redundant browse eyebrow', async () => {
     const html = renderToStaticMarkup(await KnowledgeToolkitsPage());
 

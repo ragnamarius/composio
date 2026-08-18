@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -114,7 +114,8 @@ describe('support-knowledge snapshot import', () => {
     git(sourceRoot, 'config', 'user.name', 'KB Import Test');
     git(sourceRoot, 'config', 'user.email', 'kb-import@example.com');
     writeFileSync(join(sourceRoot, 'README.md'), 'first\n', 'utf8');
-    git(sourceRoot, 'add', 'README.md');
+    writeFileSync(join(sourceRoot, '.gitignore'), 'ignored/\n', 'utf8');
+    git(sourceRoot, 'add', 'README.md', '.gitignore');
     git(sourceRoot, 'commit', '-m', 'first');
     const firstCommit = git(sourceRoot, 'rev-parse', 'HEAD');
     git(sourceRoot, 'remote', 'add', 'origin', 'git@github.com:OtherOrg/support-knowledge.git');
@@ -125,6 +126,16 @@ describe('support-knowledge snapshot import', () => {
     git(sourceRoot, 'remote', 'set-url', 'origin', 'https://github.com/ComposioHQ/support-knowledge.git');
     expect(verifySupportKnowledgeCheckout({ sourceRoot, sourceCommit: firstCommit }))
       .toBe(firstCommit);
+
+    writeFileSync(join(sourceRoot, 'README.md'), 'dirty\n', 'utf8');
+    expect(() => verifySupportKnowledgeCheckout({ sourceRoot, sourceCommit: firstCommit }))
+      .toThrow('has uncommitted changes');
+    git(sourceRoot, 'restore', 'README.md');
+
+    writeDocument(sourceRoot, 'ignored/public.md', publicDocument);
+    expect(() => verifySupportKnowledgeCheckout({ sourceRoot, sourceCommit: firstCommit }))
+      .toThrow('contains ignored knowledge files');
+    rmSync(join(sourceRoot, 'ignored'), { recursive: true });
 
     writeFileSync(join(sourceRoot, 'README.md'), 'second\n', 'utf8');
     git(sourceRoot, 'add', 'README.md');

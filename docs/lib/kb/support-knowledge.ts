@@ -78,6 +78,28 @@ export function verifySupportKnowledgeCheckout(input: {
   sourceRoot: string;
   sourceCommit: string;
 }): string {
+  const dirty = gitOutput(input.sourceRoot, [
+    'status',
+    '--porcelain=v1',
+    '--untracked-files=all',
+  ]);
+  if (dirty) {
+    throw new Error('support-knowledge checkout has uncommitted changes');
+  }
+
+  const ignoredKnowledgeFiles = gitOutput(input.sourceRoot, [
+    'ls-files',
+    '--others',
+    '--ignored',
+    '--exclude-standard',
+    '--',
+    ':(glob)**/public.md',
+    ':(glob)**/customer-safe.md',
+  ]);
+  if (ignoredKnowledgeFiles) {
+    throw new Error('support-knowledge checkout contains ignored knowledge files');
+  }
+
   const head = gitOutput(input.sourceRoot, ['rev-parse', 'HEAD']);
   const requested = gitOutput(input.sourceRoot, [
     'rev-parse',

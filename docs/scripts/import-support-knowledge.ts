@@ -1,6 +1,5 @@
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { buildKbCatalog } from '@/lib/kb/catalog';
 import {
   buildSupportKnowledgeSnapshot,
@@ -30,16 +29,6 @@ const previousManifestPath = join(targetRoot, 'manifest.json');
 const previousManifest = existsSync(previousManifestPath)
   ? JSON.parse(readFileSync(previousManifestPath, 'utf8')) as KbManifest
   : undefined;
-
-const validation = spawnSync('python3', ['scripts/validate-kb.py'], {
-  cwd: sourceRoot,
-  encoding: 'utf8',
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
-if (validation.status !== 0) {
-  const details = [validation.stdout, validation.stderr].filter(Boolean).join('\n').trim();
-  throw new Error(`support-knowledge validation failed${details ? `:\n${details}` : ''}`);
-}
 
 const now = new Date();
 const snapshot = buildSupportKnowledgeSnapshot({

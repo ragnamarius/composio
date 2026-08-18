@@ -354,7 +354,7 @@
 **Interfaces:**
 - Sends only `filter=kb` from the KB surface.
 - Displays canonical source title, section-aware excerpt, and link; does not show model scores or generated-answer language.
-- Emits provider-neutral PostHog events without raw query text: `kb_search_completed`, `kb_search_zero_results`, and `kb_search_result_clicked`.
+- Emits provider-neutral client PostHog events: `kb_search_completed`, `kb_search_zero_results`, and `kb_search_result_clicked`. Query review is handled by the server event below.
 
 - [ ] **Step 1: Extend static UI tests before editing components**
 
@@ -370,9 +370,9 @@
 
   Remove filter selection from `/kb/search`, hardcode the hidden `filter` input and API request to `kb`, and update heading/description/loading copy to say public support knowledge. Preserve the owner's current removal of badges/provenance text and do not recreate `source-badge.tsx`.
 
-- [ ] **Step 4: Add provider-neutral analytics without recording the query**
+- [ ] **Step 4: Add provider-neutral client analytics and one server query event**
 
-  Use the existing `usePostHog` hook. After a successful response capture retrieval mode, result count, and degradation category; capture a distinct zero-result event; on click capture stable object ID and displayed position. Never include `query`, excerpt, title, URL query parameters, or embedding/Algolia scores.
+  Use the existing `usePostHog` hook. After a successful response capture retrieval mode, result count, and degradation category; capture a distinct zero-result event; on click capture stable object ID and displayed position. Client events must not include query-bearing URL parameters, excerpts, titles, or embedding/Algolia scores. Separately, send a non-blocking server event with the first 200 characters of the query after redacting common credential patterns so MVP relevance can be reviewed in PostHog.
 
 - [ ] **Step 5: Run UI and route tests**
 
