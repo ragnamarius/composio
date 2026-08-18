@@ -356,6 +356,34 @@ describe('unified knowledge search', () => {
     expect(body.results.map(result => result.objectID)).toEqual(['exact-identifier']);
   });
 
+  test('allows a cold semantic request to finish without degrading', async () => {
+    const answer = publicKbCandidateFromAlgolia(record({
+      id: 'cold-answer',
+      title: 'Cold-start answer',
+      sourceType: 'kb',
+      pageRank: 1_900,
+    }));
+    const handler = createKnowledgeSearchHandler({
+      hybridEnabled: () => true,
+      searchKeywordCandidates: async () => ({ candidates: [answer] }),
+      searchSemanticCandidates: async () => {
+        await new Promise(resolve => setTimeout(resolve, 2_200));
+        return [answer];
+      },
+    });
+
+    const response = await handler(new Request(
+      'http://localhost/api/knowledge-search?q=cold-start+answer&filter=kb',
+    ));
+    const body = await response.json() as {
+      mode: string;
+      degradedReason?: string;
+    };
+
+    expect(body.mode).toBe('hybrid');
+    expect(body.degradedReason).toBeUndefined();
+  });
+
   test('degrades to either retriever and fails only when both are unavailable', async () => {
     const answer = publicKbCandidateFromAlgolia(record({
       id: 'answer',

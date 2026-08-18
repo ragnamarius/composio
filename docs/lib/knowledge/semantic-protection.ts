@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-export const DEFAULT_SEMANTIC_TIMEOUT_MS = 1_800;
+export const DEFAULT_SEMANTIC_TIMEOUT_MS = 3_000;
 export const DEFAULT_SEMANTIC_REQUESTS_PER_MINUTE = 60;
 export const DEFAULT_SEMANTIC_GLOBAL_REQUESTS_PER_MINUTE = 600;
 export const DEFAULT_SEMANTIC_MAX_CONCURRENCY = 8;
