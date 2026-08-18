@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { buildKbCatalog } from '@/lib/kb/catalog';
 import {
   buildSupportKnowledgeSnapshot,
+  verifySupportKnowledgeCheckout,
   writeSupportKnowledgeSnapshot,
 } from '@/lib/kb/support-knowledge';
 import type { KbManifest } from '@/lib/kb/types';
@@ -23,6 +24,7 @@ if (!sourceRootArgument || !isAbsolute(sourceRootArgument)) {
 if (!sourceCommit) throw new Error('--source-commit is required');
 
 const sourceRoot = realpathSync(sourceRootArgument);
+const verifiedSourceCommit = verifySupportKnowledgeCheckout({ sourceRoot, sourceCommit });
 const targetRoot = resolve(process.cwd(), 'kb');
 const previousManifestPath = join(targetRoot, 'manifest.json');
 const previousManifest = existsSync(previousManifestPath)
@@ -42,7 +44,7 @@ if (validation.status !== 0) {
 const now = new Date();
 const snapshot = buildSupportKnowledgeSnapshot({
   sourceRoot,
-  sourceCommit,
+  sourceCommit: verifiedSourceCommit,
   previousManifest,
   now,
 });
@@ -61,5 +63,5 @@ writeSupportKnowledgeSnapshot({
 });
 
 console.log(
-  `Imported ${snapshot.manifest.guides.length} public guides from ${sourceCommit}; run bun run generate:kb next.`,
+  `Imported ${snapshot.manifest.guides.length} public guides from ${verifiedSourceCommit}; run bun run generate:kb next.`,
 );

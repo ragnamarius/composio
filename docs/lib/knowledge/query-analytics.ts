@@ -87,9 +87,19 @@ export async function sendKnowledgeSearchAnalytics(
       body: JSON.stringify(capture.body),
       signal: AbortSignal.timeout(config.timeoutMs ?? 1_500),
     });
+    if (!response.ok) {
+      console.warn('[kb-search]', JSON.stringify({
+        event: 'kb_search_analytics_delivery_failed',
+        statusCode: response.status,
+      }));
+    }
     return response.ok;
   } catch {
     // Analytics must never affect search availability or latency.
+    console.warn('[kb-search]', JSON.stringify({
+      event: 'kb_search_analytics_delivery_failed',
+      statusCode: null,
+    }));
     return false;
   }
 }

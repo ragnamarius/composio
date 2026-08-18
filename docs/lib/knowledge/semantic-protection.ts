@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 
 export const DEFAULT_SEMANTIC_TIMEOUT_MS = 1_800;
 export const DEFAULT_SEMANTIC_REQUESTS_PER_MINUTE = 60;
+export const DEFAULT_SEMANTIC_GLOBAL_REQUESTS_PER_MINUTE = 600;
 export const DEFAULT_SEMANTIC_MAX_CONCURRENCY = 8;
 
 export interface SemanticSearchLease {
@@ -23,6 +24,7 @@ interface ClientWindow {
 
 interface SemanticSearchBudgetOptions {
   requestsPerWindow: number;
+  globalRequestsPerWindow?: number;
   windowMs: number;
   maxConcurrent: number;
   now?: () => number;
@@ -33,6 +35,7 @@ const MAX_TRACKED_CLIENTS = 5_000;
 export class SemanticSearchBudget {
   private readonly clients = new Map<string, ClientWindow>();
   private readonly now: () => number;
+  private globalWindow: ClientWindow = { count: 0, startedAt: 0 };
   private active = 0;
 
   constructor(private readonly options: SemanticSearchBudgetOptions) {
@@ -44,8 +47,16 @@ export class SemanticSearchBudget {
       return { allowed: false, reason: 'semantic-capacity-limited' };
     }
 
+    const now = this.now();
+    const globalLimit = this.options.globalRequestsPerWindow ?? Number.POSITIVE_INFINITY;
+    const globalWindow = now - this.globalWindow.startedAt >= this.options.windowMs
+      ? { count: 0, startedAt: now }
+      : this.globalWindow;
+    if (globalWindow.count >= globalLimit) {
+      return { allowed: false, reason: 'semantic-rate-limited' };
+    }
+
     if (clientKey) {
-      const now = this.now();
       const existing = this.clients.get(clientKey);
       const client = !existing || now - existing.startedAt >= this.options.windowMs
         ? { count: 0, startedAt: now }
@@ -61,6 +72,8 @@ export class SemanticSearchBudget {
       this.clients.set(clientKey, client);
     }
 
+    globalWindow.count += 1;
+    this.globalWindow = globalWindow;
     this.active += 1;
     let released = false;
     return {
@@ -100,6 +113,12 @@ const requestsPerMinute = boundedInteger(
   1,
   1_000,
 );
+const globalRequestsPerMinute = boundedInteger(
+  process.env.KB_SEMANTIC_GLOBAL_REQUESTS_PER_MINUTE,
+  DEFAULT_SEMANTIC_GLOBAL_REQUESTS_PER_MINUTE,
+  1,
+  10_000,
+);
 const maxConcurrency = boundedInteger(
   process.env.KB_SEMANTIC_MAX_CONCURRENCY,
   DEFAULT_SEMANTIC_MAX_CONCURRENCY,
@@ -108,6 +127,7 @@ const maxConcurrency = boundedInteger(
 );
 const defaultBudget = new SemanticSearchBudget({
   requestsPerWindow: requestsPerMinute,
+  globalRequestsPerWindow: globalRequestsPerMinute,
   windowMs: 60_000,
   maxConcurrent: maxConcurrency,
 });

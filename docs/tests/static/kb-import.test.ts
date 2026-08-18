@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   buildSupportKnowledgeSnapshot,
   parseSupportKnowledgeDocument,
+  verifySupportKnowledgeCheckout,
   writeSupportKnowledgeSnapshot,
 } from '@/lib/kb/support-knowledge';
 import type { KbManifest } from '@/lib/kb/types';
@@ -51,6 +53,12 @@ function writeDocument(root: string, relativePath: string, contents: string): vo
   writeFileSync(target, contents, 'utf8');
 }
 
+function git(root: string, ...args: string[]): string {
+  const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  if (result.status !== 0) throw new Error(result.stderr);
+  return result.stdout.trim();
+}
+
 function previousManifest(): KbManifest {
   return {
     schemaVersion: 2,
@@ -58,6 +66,7 @@ function previousManifest(): KbManifest {
       repository: 'ComposioHQ/public-kb',
       commit: 'old1234',
       capturedAt: '2026-07-26',
+      contentHash: 'sha256:previous',
     },
     topics: [
       {
@@ -99,6 +108,31 @@ function previousManifest(): KbManifest {
 }
 
 describe('support-knowledge snapshot import', () => {
+  test('verifies the checkout repository and exact source commit', () => {
+    const sourceRoot = mkdtempSync(join(tmpdir(), 'support-knowledge-git-'));
+    git(sourceRoot, 'init');
+    git(sourceRoot, 'config', 'user.name', 'KB Import Test');
+    git(sourceRoot, 'config', 'user.email', 'kb-import@example.com');
+    writeFileSync(join(sourceRoot, 'README.md'), 'first\n', 'utf8');
+    git(sourceRoot, 'add', 'README.md');
+    git(sourceRoot, 'commit', '-m', 'first');
+    const firstCommit = git(sourceRoot, 'rev-parse', 'HEAD');
+    git(sourceRoot, 'remote', 'add', 'origin', 'git@github.com:OtherOrg/support-knowledge.git');
+
+    expect(() => verifySupportKnowledgeCheckout({ sourceRoot, sourceCommit: firstCommit }))
+      .toThrow('expected ComposioHQ/support-knowledge');
+
+    git(sourceRoot, 'remote', 'set-url', 'origin', 'https://github.com/ComposioHQ/support-knowledge.git');
+    expect(verifySupportKnowledgeCheckout({ sourceRoot, sourceCommit: firstCommit }))
+      .toBe(firstCommit);
+
+    writeFileSync(join(sourceRoot, 'README.md'), 'second\n', 'utf8');
+    git(sourceRoot, 'add', 'README.md');
+    git(sourceRoot, 'commit', '-m', 'second');
+    expect(() => verifySupportKnowledgeCheckout({ sourceRoot, sourceCommit: firstCommit }))
+      .toThrow('does not match requested commit');
+  });
+
   test('copies only public leaves and preserves old public guide URLs as aliases', () => {
     const sourceRoot = mkdtempSync(join(tmpdir(), 'support-knowledge-import-'));
     writeDocument(sourceRoot, 'toolkits/github/public.md', publicDocument);
@@ -118,6 +152,7 @@ describe('support-knowledge snapshot import', () => {
       repository: 'ComposioHQ/support-knowledge',
       commit: 'abc1234',
       capturedAt: '2026-08-17',
+      contentHash: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
     });
     expect(snapshot.manifest.guides).toHaveLength(1);
     expect(snapshot.manifest.guides[0]).toMatchObject({
@@ -236,6 +271,7 @@ describe('support-knowledge snapshot import', () => {
       repository: 'ComposioHQ/support-knowledge',
       commit: 'abc1234',
       capturedAt: '2026-08-17',
+      contentHash: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
     });
     expect(readFileSync(join(targetRoot, 'articles/toolkits-github.md'), 'utf8')).toContain(
       '## Tokens are redacted',

@@ -75,10 +75,10 @@ The publication layer records:
 - freshness class and review deadline;
 - `published`, `needs-review`, or `retired` state.
 
-The first docs-site slice carries over the already reviewed snapshot: two
-published evergreen guides and one time-sensitive section held for review. The
-remaining canonical corpus is imported in a separate editorial pass after the
-new surface is validated with representative content.
+The docs-site snapshot imports every public leaf from a verified
+`ComposioHQ/support-knowledge` commit. Customer-safe leaves remain excluded.
+The manifest records both the exact commit and a deterministic hash of the
+vendored public source bytes.
 
 ## Routes and Navigation
 
@@ -111,10 +111,15 @@ artifact is unavailable, KB search returns keyword results. If Algolia is
 unavailable, it combines local lexical results with semantic results. No failure
 path widens the corpus beyond public KB records.
 
-The same read-only search and canonical-page contract is consumed by the
-portable `support-knowledge` skill and internal support drafting/debugging
-skills. Skills retrieve evidence and let their host agent answer with citations;
-they do not contain a duplicate fact corpus or run their own generation service.
+Semantic requests have a short timeout, an eight-request concurrency ceiling,
+a 60-request-per-minute client budget, and a generous 600-request-per-minute
+process ceiling. Hitting any semantic guardrail is logged and degrades to
+keyword results rather than blocking a user search. All limits are configurable.
+
+The same read-only search and canonical-page contract is available to the
+existing public `composio` skill as a fallback after its primary documentation
+and CLI sources. The skill retrieves evidence and lets its host agent answer; it
+does not contain a duplicate fact corpus or run its own generation service.
 Authenticated retrieval of `customer-safe` content is a separate future design.
 
 Published KB pages are also included in:
@@ -157,8 +162,8 @@ the local KB unavailable; they may degrade to ordinary links.
 The implementation is complete when:
 
 - parser and publication-gate unit tests pass;
-- the validator reports two published guides and one held entry for the initial
-  snapshot;
+- the importer verifies the upstream repository and exact checked-out commit;
+- the validator reports the expected public guide count and no private leaves;
 - `/kb`, topic pages, guide pages, and aliases render in a local docs build;
 - held content is absent from routes, search, sitemap, and LLM outputs;
 - existing docs tests, type checks, lint, link validation, and production build

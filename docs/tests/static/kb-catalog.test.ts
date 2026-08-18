@@ -47,6 +47,7 @@ function manifest(overrides: Partial<KbManifest['guides'][number]> = {}): KbMani
       repository: 'ComposioHQ/support-workflows',
       commit: '5eed614',
       capturedAt: '2026-07-21',
+      contentHash: 'sha256:fixture',
     },
     topics: [
       {

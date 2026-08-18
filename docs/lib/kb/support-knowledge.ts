@@ -10,6 +10,8 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { basename, dirname, join, parse, relative, resolve } from 'node:path';
 import type {
   KbFreshness,
@@ -52,6 +54,62 @@ export interface SupportKnowledgeSnapshot {
   manifest: KbManifest;
   sourceFiles: Map<string, string>;
   articleFiles: Map<string, string>;
+}
+
+function gitOutput(sourceRoot: string, args: string[]): string {
+  const result = spawnSync('git', args, {
+    cwd: sourceRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (result.status !== 0) {
+    const details = result.stderr.trim();
+    throw new Error(`could not verify support-knowledge checkout${details ? `: ${details}` : ''}`);
+  }
+  return result.stdout.trim();
+}
+
+function repositoryFromRemote(remote: string): string | undefined {
+  return remote.match(/github\.com(?::|\/)([^/]+\/[^/]+?)(?:\.git)?$/i)?.[1];
+}
+
+/** Verify that the imported bytes are checked out from the repository and commit we record. */
+export function verifySupportKnowledgeCheckout(input: {
+  sourceRoot: string;
+  sourceCommit: string;
+}): string {
+  const head = gitOutput(input.sourceRoot, ['rev-parse', 'HEAD']);
+  const requested = gitOutput(input.sourceRoot, [
+    'rev-parse',
+    '--verify',
+    `${input.sourceCommit}^{commit}`,
+  ]);
+  if (head !== requested) {
+    throw new Error(
+      `support-knowledge HEAD ${head} does not match requested commit ${requested}`,
+    );
+  }
+
+  const remote = gitOutput(input.sourceRoot, ['remote', 'get-url', 'origin']);
+  const repository = repositoryFromRemote(remote);
+  if (repository?.toLowerCase() !== SOURCE_REPOSITORY.toLowerCase()) {
+    throw new Error(
+      `support-knowledge origin is ${remote}; expected ${SOURCE_REPOSITORY}`,
+    );
+  }
+  return head;
+}
+
+function sourceContentHash(sourceFiles: Map<string, string>): string {
+  const hash = createHash('sha256');
+  for (const [relativePath, contents] of [...sourceFiles].sort(([left], [right]) =>
+    left.localeCompare(right))) {
+    hash.update(relativePath, 'utf8');
+    hash.update('\0');
+    hash.update(contents, 'utf8');
+    hash.update('\0');
+  }
+  return `sha256:${hash.digest('hex')}`;
 }
 
 function unquote(value: string): string {
@@ -359,6 +417,7 @@ export function buildSupportKnowledgeSnapshot(input: {
         repository: SOURCE_REPOSITORY,
         commit: input.sourceCommit.trim(),
         capturedAt: input.now.toISOString().slice(0, 10),
+        contentHash: sourceContentHash(sourceFiles),
       },
       topics: topicDefinitions(publicDocuments, input.previousManifest),
       guides,

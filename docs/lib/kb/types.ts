@@ -64,6 +64,7 @@ export interface KbManifest {
     repository: string;
     commit: string;
     capturedAt: string;
+    contentHash: string;
   };
   topics: KbTopic[];
   guides: KbGuideDefinition[];

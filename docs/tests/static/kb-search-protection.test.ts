@@ -89,6 +89,24 @@ describe('knowledge search semantic protection', () => {
 });
 
 describe('semantic search budget', () => {
+  test('applies a global ceiling to anonymous and rotating clients', () => {
+    const budget = new SemanticSearchBudget({
+      requestsPerWindow: 10,
+      globalRequestsPerWindow: 2,
+      windowMs: 60_000,
+      maxConcurrent: 2,
+    });
+    const anonymous = budget.tryAcquire();
+    anonymous.release?.();
+    const firstClient = budget.tryAcquire('client-a');
+    firstClient.release?.();
+
+    expect(budget.tryAcquire('client-b')).toEqual({
+      allowed: false,
+      reason: 'semantic-rate-limited',
+    });
+  });
+
   test('derives a stable opaque client key from the trusted forwarding header', () => {
     const first = semanticSearchClientKey(new Request('http://localhost', {
       headers: { 'x-forwarded-for': '203.0.113.7, 10.0.0.1' },

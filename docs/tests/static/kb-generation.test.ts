@@ -142,6 +142,7 @@ describe('public KB content generation', () => {
         repository: 'ComposioHQ/support-workflows',
         commit: '5eed614',
         capturedAt: '2026-07-21',
+        contentHash: 'sha256:fixture',
       },
       topics: [
         { slug: 'platform', title: 'Platform', description: 'Platform guidance.', featuredRank: 1 },

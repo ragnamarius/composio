@@ -308,6 +308,14 @@ export function createKnowledgeSearchHandler(
     const captureSearch = (
       event: Omit<KnowledgeSearchAnalyticsEvent, 'query' | 'filter' | 'durationMs'>,
     ): void => {
+      if (event.degradationCategory) {
+        console.warn('[kb-search]', JSON.stringify({
+          event: 'kb_search_degraded',
+          reason: event.degradationCategory,
+          retrievalMode: event.retrievalMode,
+          statusCode: event.statusCode,
+        }));
+      }
       try {
         dependencies.captureSearch?.({
           query,
@@ -317,6 +325,9 @@ export function createKnowledgeSearchHandler(
         });
       } catch {
         // Search must remain available if analytics scheduling fails.
+        console.warn('[kb-search]', JSON.stringify({
+          event: 'kb_search_analytics_schedule_failed',
+        }));
       }
     };
 

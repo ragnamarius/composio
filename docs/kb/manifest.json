@@ -3,7 +3,8 @@
   "source": {
     "repository": "ComposioHQ/support-knowledge",
     "commit": "d57f3d69079ee3819f4136df54512cdf0416cec0",
-    "capturedAt": "2026-08-17"
+    "capturedAt": "2026-08-17",
+    "contentHash": "sha256:c56581ab59512cb1091e625272b37c9bd94587177f8fb6615a788ea818d36926"
   },
   "topics": [
     {

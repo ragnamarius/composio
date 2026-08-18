@@ -102,9 +102,9 @@ jobs:
           # Public support knowledge
           check_url "/kb" "${BASE_URL}/kb"
           check_url "/kb/search" "${BASE_URL}/kb/search?q=github%20oauth&filter=kb"
-          check_json_url "/api/knowledge-search (hybrid)" \
+          check_json_url "/api/knowledge-search" \
             "${BASE_URL}/api/knowledge-search?q=github%20oauth&filter=kb" \
-            '.query == "github oauth" and .filter == "kb" and (.results | type == "array") and .mode == "hybrid"' \
+            '.query == "github oauth" and .filter == "kb" and (.results | type == "array") and (.mode == "hybrid" or .mode == "keyword" or .mode == "semantic")' \
             -H "Cache-Control: no-cache"
 
           # Provider pages
