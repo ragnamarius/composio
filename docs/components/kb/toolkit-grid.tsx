@@ -60,7 +60,7 @@ export function ToolkitGrid({ toolkits }: { toolkits: ToolkitKnowledgeSummary[] 
               <span className="min-w-0">
                 <span className="block truncate font-medium group-hover:text-fd-primary">{toolkit.name}</span>
                 <span className="mt-0.5 block text-xs text-fd-muted-foreground">
-                  {toolkit.knowledgeCount} public page{toolkit.knowledgeCount === 1 ? '' : 's'}
+                  {toolkit.knowledgeCount} resource{toolkit.knowledgeCount === 1 ? '' : 's'}
                 </span>
               </span>
             </Link>

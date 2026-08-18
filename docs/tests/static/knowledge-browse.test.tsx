@@ -296,6 +296,29 @@ describe('knowledge browse pages', () => {
     expect(html).toContain('Show 5 more');
   });
 
+  test('labels toolkit card counts as resources', () => {
+    const html = renderToStaticMarkup(<ToolkitGrid toolkits={[
+      {
+        slug: 'single',
+        name: 'Single',
+        logo: null,
+        category: null,
+        knowledgeCount: 1,
+      },
+      {
+        slug: 'multiple',
+        name: 'Multiple',
+        logo: null,
+        category: null,
+        knowledgeCount: 2,
+      },
+    ]} />);
+
+    expect(html).toContain('1 resource');
+    expect(html).toContain('2 resources');
+    expect(html).not.toContain('public page');
+  });
+
   test('renders the toolkit directory without a redundant browse eyebrow', async () => {
     const html = renderToStaticMarkup(await KnowledgeToolkitsPage());
 

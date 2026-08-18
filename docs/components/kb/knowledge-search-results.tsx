@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { usePostHog } from 'posthog-js/react';
-import type { KnowledgeSearchResponse } from '@/lib/knowledge/search';
+import type {
+  KnowledgeSearchResponse,
+  KnowledgeSearchResult,
+} from '@/lib/knowledge/search';
 import { PRODUCT_AREAS } from '@/lib/knowledge/taxonomy';
 import { getKnowledgeDisplayDescription } from '@/lib/knowledge/display';
 
@@ -30,6 +33,42 @@ export function getHighlightedSegments(
 
 export function getKnowledgeSearchDisplayExcerpt(excerpt: string): string {
   return getKnowledgeDisplayDescription(excerpt);
+}
+
+export function KnowledgeSearchResultCard({
+  result,
+  query,
+  onClick,
+}: {
+  result: KnowledgeSearchResult;
+  query: string;
+  onClick?: () => void;
+}) {
+  return (
+    <a
+      href={result.canonicalUrl}
+      onClick={onClick}
+      className="group block border border-fd-border bg-fd-background p-5 transition-colors hover:border-fd-primary/40 hover:bg-fd-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <h3 className="text-base font-semibold group-hover:text-fd-primary sm:text-lg">
+          {getHighlightedSegments(result.title, query).map((segment, segmentIndex) => (
+            segment.highlighted
+              ? <mark key={segmentIndex} className="bg-fd-primary/15 text-inherit">{segment.text}</mark>
+              : segment.text
+          ))}
+        </h3>
+        <ArrowUpRight className="mt-1 size-4 shrink-0 text-fd-muted-foreground" aria-hidden="true" />
+      </div>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-fd-muted-foreground">
+        {getHighlightedSegments(getKnowledgeSearchDisplayExcerpt(result.excerpt), query).map((segment, segmentIndex) => (
+          segment.highlighted
+            ? <mark key={segmentIndex} className="bg-fd-primary/15 text-inherit">{segment.text}</mark>
+            : segment.text
+        ))}
+      </p>
+    </a>
+  );
 }
 
 function RecoveryLinks() {
@@ -155,40 +194,15 @@ export function KnowledgeSearchResults({ query }: KnowledgeSearchResultsProps) {
             <ol className="mt-5 grid gap-3">
               {response.results.map((result, index) => (
                 <li key={result.objectID}>
-                  <a
-                    href={result.canonicalUrl}
+                  <KnowledgeSearchResultCard
+                    result={result}
+                    query={query}
                     onClick={() => posthog?.capture('kb_search_result_clicked', {
                       object_id: result.objectID,
                       displayed_position: index + 1,
                       retrieval_mode: response.mode ?? 'keyword',
                     })}
-                    className="group block border border-fd-border bg-fd-background p-5 transition-colors hover:border-fd-primary/40 hover:bg-fd-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fd-ring"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      {result.breadcrumbs.length > 0 && (
-                        <span className="border border-fd-border bg-fd-muted/30 px-2 py-1 text-xs text-fd-muted-foreground">
-                          {result.breadcrumbs.join(' / ')}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-2 flex items-start justify-between gap-4">
-                      <h3 className="text-base font-semibold group-hover:text-fd-primary sm:text-lg">
-                        {getHighlightedSegments(result.title, query).map((segment, segmentIndex) => (
-                          segment.highlighted
-                            ? <mark key={segmentIndex} className="bg-fd-primary/15 text-inherit">{segment.text}</mark>
-                            : segment.text
-                        ))}
-                      </h3>
-                      <ArrowUpRight className="mt-1 size-4 shrink-0 text-fd-muted-foreground" aria-hidden="true" />
-                    </div>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-fd-muted-foreground">
-                      {getHighlightedSegments(getKnowledgeSearchDisplayExcerpt(result.excerpt), query).map((segment, segmentIndex) => (
-                        segment.highlighted
-                          ? <mark key={segmentIndex} className="bg-fd-primary/15 text-inherit">{segment.text}</mark>
-                          : segment.text
-                      ))}
-                    </p>
-                  </a>
+                  />
                 </li>
               ))}
             </ol>

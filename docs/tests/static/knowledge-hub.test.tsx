@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import KnowledgeBaseLayout from '@/app/(home)/kb/layout';
 import { KnowledgeHub } from '@/components/kb/knowledge-hub';
@@ -10,6 +11,7 @@ import {
 } from '@/components/kb/knowledge-search-form';
 import { KnowledgeSearchResults } from '@/components/kb/knowledge-search-results';
 import * as knowledgeSearchResultsModule from '@/components/kb/knowledge-search-results';
+import type { KnowledgeSearchResult } from '@/lib/knowledge/search';
 
 function source(path: string): string {
   return readFileSync(join(import.meta.dir, '../..', path), 'utf8');
@@ -125,6 +127,40 @@ describe('knowledge hub', () => {
       .toBe('Setup and troubleshooting guidance for Airtable in Composio.');
     expect(getKnowledgeSearchDisplayExcerpt?.('Current navigation for connecting apps.'))
       .toBe('Current navigation for connecting apps.');
+  });
+
+  test('omits the redundant guide label from search result cards', () => {
+    const KnowledgeSearchResultCard = (
+      knowledgeSearchResultsModule as {
+        KnowledgeSearchResultCard?: ComponentType<{
+          result: KnowledgeSearchResult;
+          query: string;
+          onClick?: () => void;
+        }>;
+      }
+    ).KnowledgeSearchResultCard;
+    expect(typeof KnowledgeSearchResultCard).toBe('function');
+    if (!KnowledgeSearchResultCard) return;
+
+    const html = renderToStaticMarkup(<KnowledgeSearchResultCard
+      query="notion"
+      result={{
+        objectID: 'notion',
+        title: 'Notion',
+        excerpt: 'Troubleshoot connection and response-size issues.',
+        canonicalUrl: '/kb/guide/toolkits-notion',
+        sourceType: 'kb',
+        sourceLabel: 'Knowledge Base',
+        breadcrumbs: ['Guide'],
+        productAreas: [],
+        toolkitSlugs: ['notion'],
+        lastVerifiedAt: '2026-08-17',
+        section: null,
+      }}
+    />);
+
+    expect(html).toContain('Notion');
+    expect(html).not.toContain('Guide');
   });
 
   test('implements accessible result, empty, and failure states', () => {
