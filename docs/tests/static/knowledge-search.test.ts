@@ -6,6 +6,7 @@ import {
   algoliaFacetFilters,
   filterLegacyReferenceRecords,
   knowledgeSearchResultFromRecord,
+  plainKnowledgeExcerpt,
   searchKnowledgeRecords,
 } from '@/lib/knowledge/search';
 import { createKnowledgeSearchHandler, GET } from '@/app/api/knowledge-search/route';
@@ -61,6 +62,12 @@ const closeMatchRecords = [
   record({ id: 'changelog', title: 'Connected account setup', sourceType: 'changelog', pageRank: 350 }),
   record({ id: 'legacy', title: 'Connected account setup', sourceType: 'legacy', pageRank: 25 }),
 ];
+
+describe('plain knowledge excerpts', () => {
+  test('removes an unterminated HTML opener instead of returning active markup', () => {
+    expect(plainKnowledgeExcerpt('Safe text <script alert(1)')).toBe('Safe text');
+  });
+});
 
 describe('unified knowledge search', () => {
   test('uses source rank only to break equally relevant close matches', () => {

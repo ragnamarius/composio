@@ -184,10 +184,29 @@ function decodeHtmlEntities(value: string): string {
   });
 }
 
+function stripHtmlTags(value: string): string {
+  let plainText = '';
+  let tagDepth = 0;
+
+  for (const character of value) {
+    if (character === '<') {
+      tagDepth += 1;
+      continue;
+    }
+    if (character === '>' && tagDepth > 0) {
+      tagDepth -= 1;
+      if (tagDepth === 0) plainText += ' ';
+      continue;
+    }
+    if (tagDepth === 0) plainText += character;
+  }
+
+  return plainText;
+}
+
 export function plainKnowledgeExcerpt(value: string): string {
   return decodeHtmlEntities(
-    value
-      .replace(/<[^>]*>/g, '')
+    stripHtmlTags(value)
       .replace(/^\s{0,3}#{1,6}\s+/gm, '')
       .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
       .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
