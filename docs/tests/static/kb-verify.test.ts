@@ -40,7 +40,7 @@ const catalog = buildProductCatalog(TOOLKITS);
 const MANIFEST: KbManifest = {
   schemaVersion: 2,
   source: {
-    repository: 'ComposioHQ/support-workflows',
+    repository: 'ComposioHQ/example-knowledge',
     commit: 'abc1234',
     capturedAt: '2026-07-22',
     contentHash: 'sha256:fixture',

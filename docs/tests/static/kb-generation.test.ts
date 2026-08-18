@@ -139,7 +139,7 @@ describe('public KB content generation', () => {
     const manifest: KbManifest = {
       schemaVersion: 2,
       source: {
-        repository: 'ComposioHQ/support-workflows',
+        repository: 'ComposioHQ/example-knowledge',
         commit: '5eed614',
         capturedAt: '2026-07-21',
         contentHash: 'sha256:fixture',
